@@ -3,18 +3,863 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
+		<title>Context biasing: Voxtral vs Whisper</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+		<style>
+			:root {
+				--bg: #fbfbf8;
+				--surface: #ffffff;
+				--surface-2: #f5f4ef;
+				--surface-3: #ebe9e0;
+				--border: #e4e3de;
+				--border-strong: #c9c9c4;
+				--text: #18181b;
+				--muted: #6d6d78;
+				--orange: #fa500f;
+				--orange-soft: #ffdccf;
+				--orange-tint: #fff0eb;
+				--error: #e51300;
+				--success: #15803d;
+				--success-soft: #dcfce7;
+				--success-line: #16a34a;
+				--font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+				--font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				font-family: var(--font-sans);
+				background: var(--bg);
+				color: var(--text);
+				line-height: 1.5;
+				-webkit-font-smoothing: antialiased;
+			}
+			main {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 48px 24px 72px;
+			}
+			h1 {
+				font-size: 2.25rem;
+				font-weight: 500;
+				letter-spacing: -0.02em;
+				line-height: 1.15;
+				margin: 0 0 12px;
+			}
+			/* Mistral brand stripe: yellow to red in square blocks */
+			h1::before {
+				content: '';
+				display: block;
+				width: 120px;
+				height: 8px;
+				margin-bottom: 24px;
+				background: linear-gradient(
+					90deg,
+					#fec63a 0 20%,
+					#ffaf01 20% 40%,
+					#ff8204 40% 60%,
+					#fa500f 60% 80%,
+					#e51300 80% 100%
+				);
+			}
+			.subtitle {
+				color: var(--muted);
+				margin: 0 0 32px;
+			}
+			.subtitle a {
+				color: var(--text);
+				text-decoration: underline;
+				text-decoration-color: var(--orange);
+				text-underline-offset: 3px;
+			}
+			.subtitle a:hover {
+				color: var(--orange);
+			}
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				padding: 24px;
+			}
+			.drop-zone {
+				border-style: dashed;
+				border-color: var(--border-strong);
+				transition:
+					border-color 0.15s,
+					background 0.15s;
+			}
+			.drop-zone.dragging {
+				border-color: var(--orange);
+				background: var(--orange-tint);
+			}
+			.inputs {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 16px;
+				margin-bottom: 16px;
+			}
+			.card h2 {
+				font-family: var(--font-mono);
+				font-size: 0.75rem;
+				font-weight: 400;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: var(--muted);
+				margin: 0 0 16px;
+			}
+			.row {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+			button,
+			.file-button {
+				font: inherit;
+				font-size: 0.9rem;
+				font-weight: 500;
+				border: 1px solid var(--border);
+				background: var(--surface-2);
+				color: var(--text);
+				padding: 8px 14px;
+				border-radius: 6px;
+				cursor: pointer;
+				transition:
+					background 0.15s,
+					border-color 0.15s,
+					color 0.15s;
+			}
+			button:hover,
+			.file-button:hover {
+				background: var(--surface-3);
+			}
+			button:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+			button.primary {
+				background: var(--text);
+				border-color: var(--text);
+				color: #ffffff;
+				padding: 12px 24px;
+			}
+			button.primary:hover:not(:disabled) {
+				background: var(--orange);
+				border-color: var(--orange);
+			}
+			#sample-button {
+				background: var(--orange-tint);
+				border-color: var(--orange-soft);
+			}
+			#sample-button:hover:not(:disabled) {
+				background: var(--orange-soft);
+				border-color: var(--orange);
+			}
+			button.recording {
+				background: var(--surface);
+				border-color: var(--error);
+				color: var(--error);
+			}
+			.file-button input {
+				display: none;
+			}
+			audio {
+				width: 100%;
+				margin-top: 16px;
+			}
+			.hint {
+				color: var(--muted);
+				font-size: 0.85rem;
+				margin: 12px 0 0;
+			}
+			textarea {
+				width: 100%;
+				min-height: 130px;
+				resize: vertical;
+				font-family: var(--font-mono);
+				font-size: 0.85rem;
+				background: var(--surface-2);
+				color: var(--text);
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				padding: 12px;
+			}
+			textarea:focus {
+				outline: none;
+				border-color: var(--orange);
+			}
+			.term-count {
+				font-family: var(--font-mono);
+				font-size: 0.75rem;
+			}
+			.term-count.over {
+				color: var(--error);
+			}
+			.actions {
+				display: flex;
+				justify-content: center;
+				margin: 8px 0 24px;
+			}
+			.panels {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 16px;
+			}
+			.panel {
+				display: flex;
+				flex-direction: column;
+				gap: 14px;
+				min-height: 320px;
+			}
+			.panel-head {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+			}
+			.panel-head h3 {
+				margin: 0;
+				font-size: 1.25rem;
+				font-weight: 500;
+				letter-spacing: -0.01em;
+			}
+			.switch {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				cursor: pointer;
+				user-select: none;
+				white-space: nowrap;
+				font-size: 0.85rem;
+				font-weight: 500;
+			}
+			.switch input {
+				position: absolute;
+				opacity: 0;
+				width: 1px;
+				height: 1px;
+			}
+			.track {
+				width: 40px;
+				height: 22px;
+				border-radius: 999px;
+				background: var(--border-strong);
+				position: relative;
+				transition: background 0.15s;
+				flex-shrink: 0;
+			}
+			.track::after {
+				content: '';
+				position: absolute;
+				top: 3px;
+				left: 3px;
+				width: 16px;
+				height: 16px;
+				border-radius: 50%;
+				background: #ffffff;
+				box-shadow: 0 1px 2px rgba(24, 24, 27, 0.2);
+				transition: transform 0.15s;
+			}
+			.switch input:checked + .track {
+				background: var(--orange);
+			}
+			.switch input:checked + .track::after {
+				transform: translateX(18px);
+			}
+			.switch input:focus-visible + .track {
+				outline: 2px solid var(--orange);
+				outline-offset: 2px;
+			}
+			.status {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-family: var(--font-mono);
+				font-size: 0.75rem;
+				color: var(--muted);
+				min-height: 1.3em;
+			}
+			/* Five brand-colored pixels that bounce in sequence */
+			.pixel-loader {
+				display: inline-flex;
+				align-items: center;
+				gap: 3px;
+				height: 12px;
+			}
+			.pixel-loader i {
+				width: 6px;
+				height: 6px;
+				animation: pixel-bounce 1s ease-in-out infinite;
+			}
+			.pixel-loader i:nth-child(1) {
+				background: #fec63a;
+			}
+			.pixel-loader i:nth-child(2) {
+				background: #ffaf01;
+				animation-delay: 0.1s;
+			}
+			.pixel-loader i:nth-child(3) {
+				background: #ff8204;
+				animation-delay: 0.2s;
+			}
+			.pixel-loader i:nth-child(4) {
+				background: #fa500f;
+				animation-delay: 0.3s;
+			}
+			.pixel-loader i:nth-child(5) {
+				background: #e51300;
+				animation-delay: 0.4s;
+			}
+			@keyframes pixel-bounce {
+				0%,
+				100% {
+					opacity: 0.3;
+					transform: translateY(0);
+				}
+				50% {
+					opacity: 1;
+					transform: translateY(-3px);
+				}
+			}
+			button.primary.busy {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+			}
+			button.primary.busy:disabled {
+				opacity: 1;
+				cursor: progress;
+			}
+			.panel {
+				transition: border-color 0.2s;
+			}
+			.panel.is-loading {
+				border-color: var(--orange-soft);
+			}
+			.status.error {
+				color: var(--error);
+			}
+			.transcript {
+				position: relative;
+				overflow: hidden;
+				background: var(--surface-2);
+				border: 1px solid var(--border);
+				padding: 16px;
+				font-size: 1.05rem;
+				line-height: 1.6;
+				min-height: 120px;
+				white-space: pre-wrap;
+				flex: 1;
+			}
+			.transcript.empty {
+				color: var(--muted);
+				font-style: italic;
+			}
+			.transcript.loading {
+				color: var(--muted);
+			}
+			.transcript.loading::after {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(90deg, transparent, rgba(250, 80, 15, 0.12), transparent);
+				transform: translateX(-100%);
+				animation: shimmer 1.4s ease-in-out infinite;
+			}
+			@keyframes shimmer {
+				to {
+					transform: translateX(100%);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.pixel-loader i,
+				.transcript.loading::after {
+					animation: none;
+				}
+				.pixel-loader i {
+					opacity: 1;
+				}
+			}
+			mark {
+				background: var(--success-soft);
+				color: var(--text);
+				box-shadow: inset 0 -2px 0 var(--success-line);
+				padding: 0 2px;
+			}
+			.score {
+				font-weight: 600;
+			}
+			.chips {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.chip {
+				font-family: var(--font-mono);
+				font-size: 0.75rem;
+				padding: 2px 8px;
+				background: var(--surface-2);
+				border: 1px solid var(--border);
+				color: var(--muted);
+				text-decoration: line-through;
+			}
+			.chip.hit {
+				background: var(--success);
+				border-color: var(--success);
+				color: #ffffff;
+				text-decoration: none;
+			}
+			details {
+				font-size: 0.85rem;
+				color: var(--muted);
+			}
+			details summary {
+				cursor: pointer;
+			}
+			details pre {
+				font-family: var(--font-mono);
+				font-size: 0.8rem;
+				white-space: pre-wrap;
+				word-break: break-word;
+				background: var(--surface-2);
+				border: 1px solid var(--border);
+				padding: 12px;
+				margin: 8px 0 0;
+				color: var(--text);
+			}
+			@media (max-width: 800px) {
+				h1 {
+					font-size: 1.75rem;
+				}
+				.inputs,
+				.panels {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
 	</head>
 	<body>
-		<h1 id="heading"></h1>
-		<p>This page comes from a static asset stored at `public/index.html` as configured in `wrangler.jsonc`.</p>
+		<main>
+			<h1>Context biasing: Voxtral Mini Transcribe V2 vs Whisper Large V3 Turbo</h1>
+			<p class="subtitle">
+				<a href="https://docs.mistral.ai/studio/audio/speech_to_text/offline_transcription#context-biasing" target="_blank" rel="noopener"
+					>Learn more about context biasing in Mistral's docs</a
+				>
+			</p>
+
+			<section class="inputs">
+				<div id="audio-card" class="card drop-zone">
+					<h2>1. Audio</h2>
+					<div class="row">
+						<label class="file-button">
+							Upload file
+							<input id="file-input" type="file" accept="audio/*,video/*" />
+						</label>
+						<button id="record-button" type="button">Record</button>
+						<button id="sample-button" type="button">Load sample</button>
+						<span id="audio-info" class="hint" style="margin: 0"></span>
+					</div>
+					<audio id="player" controls hidden></audio>
+					<p class="hint">Or drag and drop an audio file here.</p>
+				</div>
+
+				<div class="card">
+					<h2>2. Context biasing terms</h2>
+					<textarea id="terms" placeholder="One term per line or comma-separated" spellcheck="false"></textarea>
+					<p class="hint"><span id="term-count" class="term-count">0 / 100 terms</span></p>
+				</div>
+			</section>
+
+			<div class="actions">
+				<button id="transcribe-button" class="primary" type="button" disabled>Transcribe with both models</button>
+			</div>
+
+			<section class="panels">
+				<article class="card panel" data-model="whisper">
+					<div class="panel-head">
+						<div>
+							<h3>Whisper Large V3 Turbo</h3>
+						</div>
+						<label class="switch">
+							<input type="checkbox" role="switch" class="bias-toggle" />
+							<span class="track"></span>
+							<span class="bias-label">Biasing off</span>
+						</label>
+					</div>
+					<div class="status" aria-live="polite"></div>
+					<div class="transcript empty">No transcript yet.</div>
+					<div class="score"></div>
+					<div class="chips"></div>
+					<details hidden>
+						<summary>Sent as <code>initial_prompt</code></summary>
+						<pre></pre>
+					</details>
+				</article>
+
+				<article class="card panel" data-model="voxtral">
+					<div class="panel-head">
+						<div>
+							<h3>Voxtral Mini Transcribe V2</h3>
+						</div>
+						<label class="switch">
+							<input type="checkbox" role="switch" class="bias-toggle" />
+							<span class="track"></span>
+							<span class="bias-label">Biasing off</span>
+						</label>
+					</div>
+					<div class="status" aria-live="polite"></div>
+					<div class="transcript empty">No transcript yet.</div>
+					<div class="score"></div>
+					<div class="chips"></div>
+					<details hidden>
+						<summary>Sent as <code>context_bias</code></summary>
+						<pre></pre>
+					</details>
+				</article>
+			</section>
+		</main>
+
 		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
+			const MAX_TERMS = 100;
+
+			const SAMPLE_AUDIO_URL = '/samples/standup.wav';
+			const SAMPLE_TERMS = ['Priya', 'Hono', 'Kysely', 'Inngest', 'Valibot', 'Rolldown', 'Oxlint', 'Vitest', 'Devstral', 'Magistral', 'Pixtral', 'Voxtral'];
+
+			const fileInput = document.getElementById('file-input');
+			const recordButton = document.getElementById('record-button');
+			const sampleButton = document.getElementById('sample-button');
+			const audioInfo = document.getElementById('audio-info');
+			const player = document.getElementById('player');
+			const termsInput = document.getElementById('terms');
+			const termCount = document.getElementById('term-count');
+			const transcribeButton = document.getElementById('transcribe-button');
+
+			let audioFile = null;
+			let recorder = null;
+			let recordTimer = null;
+
+			const panels = {};
+			for (const el of document.querySelectorAll('.panel')) {
+				const model = el.dataset.model;
+				panels[model] = {
+					model,
+					el,
+					toggle: el.querySelector('.bias-toggle'),
+					toggleLabel: el.querySelector('.bias-label'),
+					status: el.querySelector('.status'),
+					transcript: el.querySelector('.transcript'),
+					score: el.querySelector('.score'),
+					chips: el.querySelector('.chips'),
+					details: el.querySelector('details'),
+					sent: el.querySelector('details pre'),
+					lastText: null,
+					requestId: 0,
+					loading: false,
+					timer: null,
+				};
+			}
+
+			function getTerms() {
+				const seen = new Set();
+				const terms = [];
+				for (const raw of termsInput.value.split(/[\n,]/)) {
+					const term = raw.trim().replace(/\s+/g, ' ');
+					const key = term.toLowerCase();
+					if (term && !seen.has(key)) {
+						seen.add(key);
+						terms.push(term);
+					}
+				}
+				return terms;
+			}
+
+			function escapeRegExp(s) {
+				return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			}
+
+			// Case-insensitive, and treats spaces, underscores and hyphens as equivalent,
+			// since Voxtral receives multi-word terms joined with underscores.
+			function termRegExp(term, flags) {
+				const body = term
+					.split(/[\s_-]+/)
+					.filter(Boolean)
+					.map(escapeRegExp)
+					.join('[\\s_-]+');
+				return new RegExp(`(?<![\\p{L}\\p{N}])(?:${body})(?![\\p{L}\\p{N}])`, flags);
+			}
+
+			function renderTranscript(panel) {
+				const text = panel.lastText;
+				if (text === null) return;
+				const terms = getTerms();
+
+				panel.transcript.textContent = '';
+				panel.transcript.classList.toggle('empty', !text);
+				if (!text) {
+					panel.transcript.textContent = '(empty transcript)';
+				} else if (terms.length === 0) {
+					panel.transcript.textContent = text;
+				} else {
+					const sorted = [...terms].sort((a, b) => b.length - a.length);
+					const combined = new RegExp(sorted.map((t) => termRegExp(t, 'iu').source).join('|'), 'giu');
+					let last = 0;
+					for (const match of text.matchAll(combined)) {
+						if (match.index > last) panel.transcript.append(text.slice(last, match.index));
+						const mark = document.createElement('mark');
+						mark.textContent = match[0];
+						panel.transcript.append(mark);
+						last = match.index + match[0].length;
+					}
+					if (last < text.length) panel.transcript.append(text.slice(last));
+				}
+
+				panel.chips.textContent = '';
+				if (terms.length === 0) {
+					panel.score.textContent = '';
+					return;
+				}
+				let hits = 0;
+				for (const term of terms) {
+					const found = termRegExp(term, 'iu').test(text);
+					if (found) hits++;
+					const chip = document.createElement('span');
+					chip.className = found ? 'chip hit' : 'chip';
+					chip.textContent = term;
+					chip.title = found ? 'Found in transcript' : 'Not found in transcript';
+					panel.chips.append(chip);
+				}
+				panel.score.textContent = `${hits} / ${terms.length} terms found`;
+			}
+
+			function updateTermCount() {
+				const n = getTerms().length;
+				termCount.textContent = `${n} / ${MAX_TERMS} terms`;
+				termCount.classList.toggle('over', n > MAX_TERMS);
+				updateTranscribeButton();
+				for (const panel of Object.values(panels)) renderTranscript(panel);
+			}
+
+			function pixelLoader() {
+				const loader = document.createElement('span');
+				loader.className = 'pixel-loader';
+				loader.setAttribute('aria-hidden', 'true');
+				for (let i = 0; i < 5; i++) loader.append(document.createElement('i'));
+				return loader;
+			}
+
+			function updateTranscribeButton() {
+				const busy = Object.values(panels).some((panel) => panel.loading);
+				transcribeButton.disabled = busy || !audioFile || getTerms().length > MAX_TERMS || recorder !== null;
+				if (busy === transcribeButton.classList.contains('busy')) return;
+				transcribeButton.classList.toggle('busy', busy);
+				if (busy) {
+					transcribeButton.replaceChildren(pixelLoader(), 'Transcribing…');
+				} else {
+					transcribeButton.textContent = 'Transcribe with both models';
+				}
+			}
+
+			function startLoading(panel, bias) {
+				clearInterval(panel.timer);
+				panel.loading = true;
+				panel.el.classList.add('is-loading');
+				panel.transcript.classList.add('loading');
+				panel.status.classList.remove('error');
+
+				const label = document.createElement('span');
+				panel.status.replaceChildren(pixelLoader(), label);
+				const started = performance.now();
+				const tick = () => {
+					label.textContent = `Transcribing ${bias ? 'with' : 'without'} context biasing… ${((performance.now() - started) / 1000).toFixed(1)}s`;
+				};
+				tick();
+				panel.timer = setInterval(tick, 100);
+				updateTranscribeButton();
+			}
+
+			function stopLoading(panel) {
+				clearInterval(panel.timer);
+				panel.timer = null;
+				panel.loading = false;
+				panel.el.classList.remove('is-loading');
+				panel.transcript.classList.remove('loading');
+				updateTranscribeButton();
+			}
+
+			function setAudio(file) {
+				audioFile = file;
+				if (player.src) URL.revokeObjectURL(player.src);
+				player.src = URL.createObjectURL(file);
+				player.hidden = false;
+				audioInfo.textContent = `${file.name} · ${(file.size / 1024).toFixed(0)} KB`;
+				for (const panel of Object.values(panels)) {
+					panel.requestId++;
+					stopLoading(panel);
+					panel.lastText = null;
+					panel.transcript.textContent = 'No transcript yet.';
+					panel.transcript.className = 'transcript empty';
+					panel.status.textContent = '';
+					panel.status.classList.remove('error');
+					panel.score.textContent = '';
+					panel.chips.textContent = '';
+					panel.details.hidden = true;
+				}
+				updateTranscribeButton();
+			}
+
+			async function runPanel(panel) {
+				if (!audioFile) return;
+				const terms = getTerms();
+				if (terms.length > MAX_TERMS) return;
+
+				const requestId = ++panel.requestId;
+				const bias = panel.toggle.checked;
+				startLoading(panel, bias);
+
+				const form = new FormData();
+				form.append('model', panel.model);
+				form.append('audio', audioFile, audioFile.name);
+				form.append('bias', String(bias));
+				for (const term of terms) form.append('terms', term);
+
+				try {
+					const res = await fetch('/api/transcribe', { method: 'POST', body: form });
+					const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+					if (requestId !== panel.requestId) return;
+					if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+					stopLoading(panel);
+					panel.lastText = data.text;
+					panel.status.textContent = `${data.bias ? 'Biasing on' : 'Biasing off'} · took ${(data.latencyMs / 1000).toFixed(1)}s`;
+					if (data.biasSent) {
+						panel.sent.textContent = Array.isArray(data.biasSent) ? JSON.stringify(data.biasSent, null, 1) : data.biasSent;
+						panel.details.hidden = false;
+					} else {
+						panel.details.hidden = true;
+					}
+					renderTranscript(panel);
+				} catch (err) {
+					if (requestId !== panel.requestId) return;
+					stopLoading(panel);
+					panel.status.textContent = err.message;
+					panel.status.classList.add('error');
+				}
+			}
+
+			fileInput.addEventListener('change', () => {
+				const file = fileInput.files[0];
+				if (file) setAudio(file);
+				fileInput.value = '';
+			});
+
+			const audioCard = document.getElementById('audio-card');
+			let dragDepth = 0;
+
+			function isAudioFile(file) {
+				return /^(audio|video)\//.test(file.type) || /\.(wav|mp3|m4a|mp4|webm|ogg|oga|opus|flac|aac)$/i.test(file.name);
+			}
+
+			// Keep the browser from opening files dropped outside the audio card.
+			window.addEventListener('dragover', (e) => e.preventDefault());
+			window.addEventListener('drop', (e) => e.preventDefault());
+
+			audioCard.addEventListener('dragenter', (e) => {
+				if (!e.dataTransfer.types.includes('Files')) return;
+				dragDepth++;
+				audioCard.classList.add('dragging');
+			});
+			audioCard.addEventListener('dragleave', () => {
+				dragDepth = Math.max(0, dragDepth - 1);
+				if (dragDepth === 0) audioCard.classList.remove('dragging');
+			});
+			audioCard.addEventListener('drop', (e) => {
+				e.preventDefault();
+				dragDepth = 0;
+				audioCard.classList.remove('dragging');
+				if (recorder) return;
+				const file = e.dataTransfer.files[0];
+				if (!file) return;
+				if (!isAudioFile(file)) {
+					audioInfo.textContent = `${file.name} is not an audio file`;
+					return;
+				}
+				setAudio(file);
+			});
+
+			recordButton.addEventListener('click', async () => {
+				if (recorder) {
+					recorder.stop();
+					return;
+				}
+				let stream;
+				try {
+					stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+				} catch (err) {
+					audioInfo.textContent = `Microphone unavailable: ${err.message}`;
+					return;
+				}
+				const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find((t) => MediaRecorder.isTypeSupported(t));
+				recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+				const chunks = [];
+				const started = Date.now();
+				recorder.addEventListener('dataavailable', (e) => e.data.size && chunks.push(e.data));
+				recorder.addEventListener('stop', () => {
+					stream.getTracks().forEach((t) => t.stop());
+					clearInterval(recordTimer);
+					const type = recorder.mimeType || 'audio/webm';
+					const ext = type.includes('mp4') ? 'mp4' : type.includes('ogg') ? 'ogg' : 'webm';
+					recorder = null;
+					recordButton.textContent = 'Record';
+					recordButton.classList.remove('recording');
+					setAudio(new File(chunks, `recording.${ext}`, { type }));
 				});
+				recorder.start();
+				recordButton.textContent = 'Stop (0s)';
+				recordButton.classList.add('recording');
+				recordTimer = setInterval(() => {
+					recordButton.textContent = `Stop (${Math.round((Date.now() - started) / 1000)}s)`;
+				}, 500);
+				updateTranscribeButton();
+			});
+
+			function setTerms(terms) {
+				termsInput.value = terms.join('\n');
+				updateTermCount();
+			}
+
+			sampleButton.addEventListener('click', async () => {
+				sampleButton.disabled = true;
+				try {
+					const res = await fetch(SAMPLE_AUDIO_URL);
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const blob = await res.blob();
+					setAudio(new File([blob], 'standup.wav', { type: blob.type || 'audio/wav' }));
+					setTerms(SAMPLE_TERMS);
+				} catch (err) {
+					audioInfo.textContent = `Could not load sample: ${err.message}`;
+				} finally {
+					sampleButton.disabled = false;
+				}
+			});
+
+			termsInput.addEventListener('input', updateTermCount);
+
+			transcribeButton.addEventListener('click', () => {
+				for (const panel of Object.values(panels)) runPanel(panel);
+			});
+
+			for (const panel of Object.values(panels)) {
+				panel.toggle.addEventListener('change', () => {
+					panel.toggleLabel.textContent = panel.toggle.checked ? 'Biasing on' : 'Biasing off';
+					// Re-run only this model so the before/after is a single click.
+					if (audioFile && panel.lastText !== null) runPanel(panel);
+				});
+			}
+
+			updateTermCount();
 		</script>
 	</body>
 </html>

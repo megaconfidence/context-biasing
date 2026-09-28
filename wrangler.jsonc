@@ -7,28 +7,24 @@
 	"name": "context-biasing",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-09-25",
-	"migrations": [
-		{
-			"new_sqlite_classes": [
-				"MyDurableObject"
-			],
-			"tag": "v1"
-		}
-	],
 	"assets": {
 		// The path to the directory containing the `index.html` file to be served at `/`
 		"directory": "./public"
 	},
-	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "MyDurableObject",
-				"name": "MY_DURABLE_OBJECT"
-			}
-		]
+	// Workers AI runs Whisper Large V3 Turbo
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
+	// Mistral API key for Voxtral Mini Transcribe V2, read from .env in local dev and uploaded from .env by `npm run deploy`
+	"secrets": {
+		"required": ["MISTRAL_API_KEY"]
 	},
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"traces": {
+			"enabled": true
+		}
 	},
 	"upload_source_maps": true
 	/**
