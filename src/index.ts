@@ -4,7 +4,7 @@ const MISTRAL_TRANSCRIPTIONS_URL = 'https://api.mistral.ai/v1/audio/transcriptio
 
 // Voxtral accepts at most 100 context_bias entries; the same cap applies to Whisper so both models get identical terms.
 const MAX_TERMS = 100;
-const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 type ModelId = 'whisper' | 'voxtral';
 

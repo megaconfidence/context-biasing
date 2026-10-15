@@ -463,7 +463,7 @@
 						<span id="audio-info" class="hint" style="margin: 0"></span>
 					</div>
 					<audio id="player" controls hidden></audio>
-					<p class="hint">Or drag and drop an audio file here.</p>
+					<p class="hint">Or drag and drop an audio file here (max 10 MB).</p>
 				</div>
 
 				<div class="card">
@@ -524,6 +524,7 @@
 
 		<script>
 			const MAX_TERMS = 100;
+			const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 			const SAMPLE_AUDIO_URL = '/samples/standup.wav';
 			const SAMPLE_TERMS = ['Priya', 'Hono', 'Kysely', 'Inngest', 'Valibot', 'Rolldown', 'Oxlint', 'Vitest', 'Devstral', 'Magistral', 'Pixtral', 'Voxtral'];
@@ -690,6 +691,10 @@
 			}
 
 			function setAudio(file) {
+				if (file.size > MAX_AUDIO_BYTES) {
+					audioInfo.textContent = `${file.name} is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 10 MB.`;
+					return;
+				}
 				audioFile = file;
 				if (player.src) URL.revokeObjectURL(player.src);
 				player.src = URL.createObjectURL(file);
