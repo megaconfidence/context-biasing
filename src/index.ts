@@ -1,5 +1,5 @@
 const WHISPER_MODEL = '@cf/openai/whisper-large-v3-turbo';
-const VOXTRAL_MODEL = 'voxtral-mini-latest';
+const VOXTRAL_MODEL = 'voxtral-mini-transcribe-3';
 const MISTRAL_TRANSCRIPTIONS_URL = 'https://api.mistral.ai/v1/audio/transcriptions';
 
 // Voxtral accepts at most 100 context_bias entries; the same cap applies to Whisper so both models get identical terms.

@@ -5,7 +5,7 @@ A side-by-side demo of how two speech-to-text models use a custom vocabulary. Ea
 | Model | Provider | Biasing mechanism |
 | --- | --- | --- |
 | Whisper Large V3 Turbo | Workers AI (`@cf/openai/whisper-large-v3-turbo`) | `initial_prompt` (terms joined with commas) |
-| Voxtral Mini Transcribe V3 | Mistral API (`voxtral-mini-latest`) | `context_bias` (up to 100 terms; multi-word terms are sent with underscores) |
+| Voxtral Mini Transcribe V3 | Mistral API (`voxtral-mini-transcribe-3`) | `context_bias` (up to 100 terms; multi-word terms are sent with underscores) |
 
 ## Setup
 
@@ -15,11 +15,13 @@ A side-by-side demo of how two speech-to-text models use a custom vocabulary. Ea
    npm install
    ```
 
-2. Add your Mistral API key to a `.env` file in the project root:
+2. Add your Mistral API key to a `.env` file in the project root. The key needs access to `voxtral-mini-transcribe-3`.
 
    ```sh
    MISTRAL_API_KEY=your-key-here
    ```
+
+   If `MISTRAL_API_KEY` is also exported in your shell, Wrangler uses that value instead of `.env` during local development.
 
 3. Run locally (Workers AI requires `npx wrangler login`):
 
@@ -71,6 +73,6 @@ Terms from the short list transcribed correctly, out of 12, using the included s
 
 | Terms sent | Whisper Large V3 Turbo | Voxtral Mini Transcribe V3 |
 | --- | --- | --- |
-| Biasing off | 3 | 3 |
+| Biasing off | 3 | 5 |
 | Short list (12 terms) | 11 | 12 |
-| Long list (100 terms) | 7 | 11 |
+| Long list (100 terms) | 7 | 12 |
