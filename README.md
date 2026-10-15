@@ -1,11 +1,11 @@
-# Context biasing: Voxtral Mini Transcribe V2 vs Whisper Large V3 Turbo
+# Context biasing: Voxtral Mini Transcribe V3 vs Whisper Large V3 Turbo
 
 A side-by-side demo of how two speech-to-text models use a custom vocabulary. Each model has its own context biasing toggle, and both receive the same list of terms when it is on.
 
 | Model | Provider | Biasing mechanism |
 | --- | --- | --- |
 | Whisper Large V3 Turbo | Workers AI (`@cf/openai/whisper-large-v3-turbo`) | `initial_prompt` (terms joined with commas) |
-| Voxtral Mini Transcribe V2 | Mistral API (`voxtral-mini-latest`) | `context_bias` (up to 100 terms; multi-word terms are sent with underscores) |
+| Voxtral Mini Transcribe V3 | Mistral API (`voxtral-mini-latest`) | `context_bias` (up to 100 terms; multi-word terms are sent with underscores) |
 
 ## Setup
 
@@ -69,7 +69,7 @@ SvelteKit, Auth0, Hasura, VoidZero, Mistral, Better Auth, Shieldstral, Turborepo
 
 Terms from the short list transcribed correctly, out of 12, using the included sample recording. Results with your own voice will vary.
 
-| Terms sent | Whisper Large V3 Turbo | Voxtral Mini Transcribe V2 |
+| Terms sent | Whisper Large V3 Turbo | Voxtral Mini Transcribe V3 |
 | --- | --- | --- |
 | Biasing off | 3 | 3 |
 | Short list (12 terms) | 11 | 12 |
