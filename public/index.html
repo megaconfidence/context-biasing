@@ -150,13 +150,85 @@
 				background: var(--orange);
 				border-color: var(--orange);
 			}
+			/* Load sample: chrome-like orange with a sweeping reflection and a squash animation on click */
 			#sample-button {
-				background: var(--orange-tint);
-				border-color: var(--orange-soft);
+				--sample-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(24, 24, 27, 0.18), 0 1px 2px rgba(24, 24, 27, 0.2);
+				position: relative;
+				overflow: hidden;
+				background: linear-gradient(180deg, #ff8a4c 0%, var(--orange) 50%, #e8490b 100%);
+				border-color: #d94207;
+				color: #ffffff;
+				text-shadow: 0 1px 1px rgba(24, 24, 27, 0.35);
+				font-weight: 600;
+				box-shadow: var(--sample-shadow);
+				transition:
+					transform 0.08s ease,
+					filter 0.15s;
+			}
+			#sample-button::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: -60%;
+				width: 45%;
+				background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+				transform: skewX(-20deg);
+				animation: chrome-sheen 3.2s ease-in-out infinite;
+				pointer-events: none;
+			}
+			@keyframes chrome-sheen {
+				0% {
+					left: -60%;
+				}
+				35%,
+				100% {
+					left: 130%;
+				}
 			}
 			#sample-button:hover:not(:disabled) {
-				background: var(--orange-soft);
-				border-color: var(--orange);
+				filter: brightness(1.06);
+			}
+			#sample-button:active:not(:disabled) {
+				transform: translateY(1px) scale(0.97);
+			}
+			#sample-button:disabled {
+				opacity: 1;
+				cursor: progress;
+			}
+			#sample-button.thud {
+				animation:
+					thud-squash 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+					thud-ring 0.5s ease-out;
+			}
+			@keyframes thud-squash {
+				0% {
+					transform: scale(1);
+				}
+				25% {
+					transform: translateY(2px) scale(0.93, 0.86);
+				}
+				55% {
+					transform: translateY(-1px) scale(1.05, 1.03);
+				}
+				80% {
+					transform: scale(0.99);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+			@keyframes thud-ring {
+				0% {
+					box-shadow:
+						var(--sample-shadow),
+						0 0 0 0 rgba(250, 80, 15, 0.55);
+				}
+				100% {
+					box-shadow:
+						var(--sample-shadow),
+						0 0 0 14px rgba(250, 80, 15, 0);
+				}
 			}
 			button.recording {
 				background: var(--surface);
@@ -376,7 +448,9 @@
 			}
 			@media (prefers-reduced-motion: reduce) {
 				.pixel-loader i,
-				.transcript.loading::after {
+				.transcript.loading::after,
+				#sample-button::after,
+				#sample-button.thud {
 					animation: none;
 				}
 				.pixel-loader i {
@@ -454,12 +528,12 @@
 				<div id="audio-card" class="card drop-zone">
 					<h2>1. Audio</h2>
 					<div class="row">
+						<button id="sample-button" type="button">Load sample</button>
 						<label class="file-button">
 							Upload file
 							<input id="file-input" type="file" accept="audio/*,video/*" />
 						</label>
 						<button id="record-button" type="button">Record</button>
-						<button id="sample-button" type="button">Load sample</button>
 						<span id="audio-info" class="hint" style="margin: 0"></span>
 					</div>
 					<audio id="player" controls hidden></audio>
@@ -835,7 +909,18 @@
 				updateTermCount();
 			}
 
+			function playThudAnimation() {
+				sampleButton.classList.remove('thud');
+				void sampleButton.offsetWidth; // restart the animation on repeated clicks
+				sampleButton.classList.add('thud');
+			}
+
+			sampleButton.addEventListener('animationend', (e) => {
+				if (e.animationName === 'thud-ring') sampleButton.classList.remove('thud');
+			});
+
 			sampleButton.addEventListener('click', async () => {
+				playThudAnimation();
 				sampleButton.disabled = true;
 				try {
 					const res = await fetch(SAMPLE_AUDIO_URL);
