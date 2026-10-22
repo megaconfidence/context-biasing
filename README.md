@@ -6,6 +6,8 @@
 
 A side-by-side demo of context biasing in [Voxtral Mini Transcribe V3](https://docs.mistral.ai/studio/audio/speech_to_text/offline_transcription#context-biasing) and [Whisper Large V3 Turbo](https://developers.cloudflare.com/workers-ai/models/whisper-large-v3-turbo/), running on [Cloudflare Workers](https://developers.cloudflare.com/workers/).
 
+**[Try the live demo](https://context-biasing.mistraldemo.workers.dev)**
+
 <img src="docs/demo.gif" alt="The sample recording is loaded, both models transcribe it with biasing off and miss most product names, then biasing is switched on for each model and the found terms turn green" width="720">
 
 </div>
@@ -106,7 +108,7 @@ docs/               README images
 You need [Node.js](https://nodejs.org/en/download) 22 or later, a [Cloudflare account](https://developers.cloudflare.com/fundamentals/account/create-account/) for Workers AI, and a [Mistral API key](https://docs.mistral.ai/getting-started/quickstart) with access to `voxtral-mini-transcribe-3`. Workers AI runs on Cloudflare even in local development, so Whisper calls may count towards your usage.
 
 ```bash
-git clone <repo-url> context-biasing
+git clone https://github.com/megaconfidence/context-biasing.git
 cd context-biasing
 npm install
 npx wrangler login
