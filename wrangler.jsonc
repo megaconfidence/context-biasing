@@ -20,6 +20,17 @@
 	"secrets": {
 		"required": ["MISTRAL_API_KEY"]
 	},
+	// Per-IP limit on POST /api/transcribe: 9 model calls per 60 seconds
+	"ratelimits": [
+		{
+			"name": "TRANSCRIBE_RATE_LIMITER",
+			"namespace_id": "4917",
+			"simple": {
+				"limit": 9,
+				"period": 60
+			}
+		}
+	],
 	"observability": {
 		"enabled": true,
 		"traces": {

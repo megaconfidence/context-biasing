@@ -5,6 +5,8 @@ const MISTRAL_TRANSCRIPTIONS_URL = 'https://api.mistral.ai/v1/audio/transcriptio
 // Voxtral accepts at most 100 context_bias entries; the same cap applies to Whisper so both models get identical terms.
 const MAX_TERMS = 100;
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+// Must match ratelimits[0].simple.limit in wrangler.jsonc; used in the error message.
+const RATE_LIMIT_PER_MINUTE = 9;
 
 type ModelId = 'whisper' | 'voxtral';
 
@@ -31,6 +33,18 @@ export default {
 			if (request.method !== 'POST') {
 				return json({ error: 'Method not allowed' }, 405);
 			}
+
+			// Checked before reading the body, so rejected requests cost no model calls.
+			const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+			const { success } = await env.TRANSCRIBE_RATE_LIMITER.limit({ key: ip });
+			if (!success) {
+				console.warn(JSON.stringify({ event: 'rate_limited', path: url.pathname }));
+				return Response.json(
+					{ error: `Rate limit reached: ${RATE_LIMIT_PER_MINUTE} model calls per minute. Try again in a minute.` },
+					{ status: 429, headers: { 'Retry-After': '60' } },
+				);
+			}
+
 			try {
 				return await handleTranscribe(request, env);
 			} catch (err) {
