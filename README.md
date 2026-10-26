@@ -77,7 +77,7 @@ flowchart LR
     result --> score(["Page: highlight found terms, score each model"])
 ```
 
-1. The page sends the audio, the terms and the switch state to `POST /api/transcribe`, once per model, in parallel.
+1. The page sends the audio, the terms and the switch state to `POST /api/transcribe`, once per model, in parallel. Each IP address can make 9 of these calls a minute; extra calls get HTTP 429.
 2. For Whisper, the Worker calls `@cf/openai/whisper-large-v3-turbo` through the Workers AI binding and passes the terms as a comma-separated `initial_prompt`. It took 3 to 13 s per run in testing.
 3. For Voxtral, the Worker forwards the audio to Mistral's `/v1/audio/transcriptions` endpoint with `model=voxtral-mini-transcribe-3` and one `context_bias` field per term, with spaces turned into underscores. It took 1 to 2 s per run in testing.
 4. With a switch off, that model gets no terms at all.
@@ -135,4 +135,5 @@ Your key doesn't have access to `voxtral-mini-transcribe-3`, or Wrangler is usin
 | Whisper model | `WHISPER_MODEL` in `src/index.ts` | `@cf/openai/whisper-large-v3-turbo` |
 | Max terms | `MAX_TERMS` in `src/index.ts` and `public/index.html` | `100` |
 | Max audio size | `MAX_AUDIO_BYTES` in `src/index.ts` and `public/index.html` | 10 MB |
+| Rate limit per IP | `ratelimits` in `wrangler.jsonc` and `RATE_LIMIT_PER_MINUTE` in `src/index.ts` | 9 calls per 60 s |
 | Sample audio and terms | `SAMPLE_AUDIO_URL` and `SAMPLE_TERMS` in `public/index.html` | `public/samples/standup.wav`, 12 terms |
